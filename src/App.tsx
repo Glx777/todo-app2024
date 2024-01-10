@@ -5,6 +5,7 @@ import { Footer } from './components/Footer'
 import { Title } from './components/Title'
 import { CreateTodoInput } from './components/CreateTodoInput'
 import { v4 as uuidv4 } from 'uuid'
+import { useQuery } from '@tanstack/react-query'
 
 export interface ITodo {
 	completed: boolean
@@ -34,33 +35,28 @@ const Wrapper = styled.div`
 	}
 `
 
+const fetchTodos = async () => {
+	const res = await fetch('https://jsonplaceholder.typicode.com/todos?_limit=3')
+
+	return res.json()
+}
+
 export const App = () => {
 	const [todos, setTodos] = useState<ITodo[]>([])
-	const [isLoading, setIsLoading] = useState(false)
 
-	const fetchTodos = async () => {
-		try {
-			setIsLoading(true)
+	const savedTodos = localStorage.getItem('todos')
+	const formattedSavedTodos = !!savedTodos && !!JSON.parse(savedTodos).length && JSON.parse(savedTodos)
 
-			const todosResponse = await fetch('https://jsonplaceholder.typicode.com/todos?_limit=3')
-			const todos: ITodo[] = await todosResponse.json()
-
-			setTodos(todos)
-			localStorage.setItem('todos', JSON.stringify(todos))
-		} finally {
-			setIsLoading(false)
-		}
-	}
+	const { data, isLoading } = useQuery({ queryKey: ['todos'], queryFn: fetchTodos, enabled: !formattedSavedTodos })
 
 	useEffect(() => {
-		const existingTodos = localStorage.getItem('todos')
-
-		if (!existingTodos || !JSON.parse(existingTodos).length) {
-			fetchTodos()
-		} else {
-			setTodos(JSON.parse(existingTodos))
+		if (data) {
+			setTodos(data)
+			localStorage.setItem('todos', JSON.stringify(data))
+		} else if (formattedSavedTodos) {
+			setTodos(formattedSavedTodos)
 		}
-	}, [])
+	}, [data])
 
 	const deleteTodo = (todoId: ITodo['id']) => {
 		const newTodos = todos.filter(todo => todo.id !== todoId)
