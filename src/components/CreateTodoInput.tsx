@@ -53,9 +53,15 @@ export const CreateTodoInput = ({ addTodo }: ICreateTodoInputProps) => {
 	const inputRef = useRef<HTMLInputElement>(null)
 
 	const keydownHandler = (event: KeyboardEvent) => {
-		if (event.key === 'Enter' && inputRef.current?.value) {
-			addTodo(inputRef.current.value)
-			setValue('')
+		if (inputRef.current?.value) {
+			if (event.key === 'Enter') {
+				addTodo(inputRef.current.value)
+				setValue('')
+			}
+
+			if (event.key === 'Escape') {
+				setValue('')
+			}
 		}
 	}
 
